@@ -1,0 +1,181 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Argon2id Password Hasher</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one narrow column. Input and button on top, three labeled results below (original, salt, hash). */
+:root {
+  --bg: #f1f4f2;
+  --surface: #ffffff;
+  --fg: #14201c;
+  --muted: #566861;
+  --line: #d3dcd8;
+  --accent: #0b6b57;
+  --accent-fg: #ffffff;
+  --code-bg: #e8efec;
+  --bad: #b3261e;
+  --font-body: "Schibsted Grotesk", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1613;
+    --surface: #15201c;
+    --fg: #e5eee9;
+    --muted: #90a59c;
+    --line: #28382f;
+    --accent: #4cc9a7;
+    --accent-fg: #06231b;
+    --code-bg: #0b110f;
+    --bad: #ff8f86;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1613;
+  --surface: #15201c;
+  --fg: #e5eee9;
+  --muted: #90a59c;
+  --line: #28382f;
+  --accent: #4cc9a7;
+  --accent-fg: #06231b;
+  --code-bg: #0b110f;
+  --bad: #ff8f86;
+  color-scheme: dark;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.5;
+  padding-inline: 16px;
+  padding-block: 28px 48px;
+}
+.wrap { max-width: 640px; margin-inline: auto; display: flex; flex-direction: column; gap: 20px; }
+h1 { font-size: 1.75rem; line-height: 1.15; margin: 0; letter-spacing: -0.01em; }
+.panel { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+label { font-weight: 500; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.row > input { flex: 1 1 220px; min-width: 0; }
+input[type="text"] {
+  font: 500 15px var(--font-mono);
+  color: var(--fg);
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+input[type="text"]::placeholder { color: var(--muted); }
+button {
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+  border-radius: 6px;
+  padding: 10px 16px;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: var(--accent-fg);
+}
+button.ghost { background: transparent; color: var(--fg); border-color: var(--line); padding: 4px 10px; font-size: 12px; font-weight: 500; }
+button:disabled { opacity: 0.55; cursor: progress; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.item { display: grid; gap: 6px; min-width: 0; }
+.item-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.item-head span { font-weight: 700; }
+code.val {
+  display: block;
+  font: 400 13px/1.5 var(--font-mono);
+  background: var(--code-bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+  min-width: 0;
+}
+.error { min-height: 1.4em; font-size: 13px; color: var(--bad); font-weight: 700; margin: 0; }
+</style>
+
+<div class="wrap">
+  <h1>Argon2id Password Hasher</h1>
+
+  <section class="panel">
+    <label for="pw">Password</label>
+    <div class="row">
+      <input type="text" id="pw" value="correct-horse-battery-staple" autocomplete="off" spellcheck="false">
+      <button type="button" id="go">Hash</button>
+    </div>
+    <p class="error" id="err" role="alert"></p>
+
+    <div class="item">
+      <div class="item-head"><span>Original password</span><button type="button" class="ghost" data-copy="o-orig">Copy</button></div>
+      <code class="val" id="o-orig">…</code>
+    </div>
+    <div class="item">
+      <div class="item-head"><span>Salt</span><button type="button" class="ghost" data-copy="o-salt">Copy</button></div>
+      <code class="val" id="o-salt">…</code>
+    </div>
+    <div class="item">
+      <div class="item-head"><span>Hash</span><button type="button" class="ghost" data-copy="o-hash">Copy</button></div>
+      <code class="val" id="o-hash">…</code>
+    </div>
+  </section>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/hash-wasm@4.11.0/dist/argon2.umd.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+
+  function toHex(bytes) {
+    return Array.prototype.map.call(bytes, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
+  }
+
+  async function hashIt() {
+    var pw = $("pw").value;
+    $("err").textContent = "";
+    if (!pw) { $("err").textContent = "Type a password first."; return; }
+    if (!window.hashwasm) { $("err").textContent = "The hashing library did not load. Reload the page."; return; }
+    $("go").disabled = true;
+    try {
+      var salt = crypto.getRandomValues(new Uint8Array(16));
+      var hash = await window.hashwasm.argon2id({
+        password: pw, salt: salt,
+        iterations: 2, memorySize: 19456, parallelism: 1, hashLength: 32,
+        outputType: "encoded"
+      });
+      $("o-orig").textContent = pw;
+      $("o-salt").textContent = toHex(salt);
+      $("o-hash").textContent = hash;
+    } catch (e) {
+      $("err").textContent = "Hashing failed: " + (e && e.message ? e.message : e);
+    } finally {
+      $("go").disabled = false;
+    }
+  }
+
+  function copyFrom(btn) {
+    var el = $(btn.getAttribute("data-copy"));
+    var flash = function (t) { btn.textContent = t; setTimeout(function () { btn.textContent = "Copy"; }, 1200); };
+    var fallback = function () {
+      var r = document.createRange(); r.selectNodeContents(el);
+      var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      flash("Selected");
+    };
+    try { navigator.clipboard.writeText(el.textContent).then(function () { flash("Copied"); }, fallback); } catch (e) { fallback(); }
+  }
+
+  $("go").addEventListener("click", hashIt);
+  $("pw").addEventListener("keydown", function (e) { if (e.key === "Enter") hashIt(); });
+  Array.prototype.forEach.call(document.querySelectorAll("[data-copy]"), function (b) {
+    b.addEventListener("click", function () { copyFrom(b); });
+  });
+
+  hashIt();
+})();
+</script>
+
+</body></html>
